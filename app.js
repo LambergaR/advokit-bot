@@ -2,13 +2,17 @@
 
 var express = require('express');
 var logging = require('./lib/logging')();
+var bodyParser = require('body-parser')
 
 var app = express();
 
 
-// Add the request logger before anything else so that it can
-// accurately log requests.
 // [START requests]
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({
+  extended: true
+})); 
+
 app.use(logging.requestLogger);
 // [END requests]
 
@@ -16,7 +20,7 @@ app.use(logging.requestLogger);
 // Say hello!
 app.get('/', function (req, res) {
   res.status(200).send('Hello, world!');
-  logging.info('Hello, world!');
+  logging.info(req.body);
 });
 // [END hello_world]
 
@@ -28,6 +32,11 @@ app.get('/webhook', function (req, res) {
     res.send('Error, wrong validation token');    
   }
 });
+
+app.post('/webhook', function (req, res) {
+	logging.info(req.body);
+	res.status(200).send();
+})
 // [END webhook_token]
 
 // Add the error logger after all middleware and routes so that
