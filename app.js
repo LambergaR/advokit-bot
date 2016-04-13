@@ -19,8 +19,8 @@ app.use(logging.requestLogger);
 // [START hello_world]
 // Say hello!
 app.get('/', function (req, res) {
-  res.status(200).send('Hello, world!');
   logging.info(req.body);
+  res.status(200).send('Hello, world!');
 });
 // [END hello_world]
 
@@ -34,8 +34,8 @@ app.get('/webhook', function (req, res) {
 });
 
 app.post('/webhook', function (req, res) {
-	logging.info(req.body);
-	res.status(200).send();
+  logging.info(req.body);
+  res.status(200).send();
 })
 // [END webhook_token]
 
