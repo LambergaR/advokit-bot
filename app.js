@@ -62,7 +62,7 @@ app.get('/flip', function (req, res) {
 		var success = false;
 
 		if(Math.random() > 0.5) {
-			if(req.query.a == "heads") {
+			if(req.query.a == "head") {
 				success = true;
 			}
 		} else {

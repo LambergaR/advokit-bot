@@ -133,8 +133,8 @@ var processMessage = function(requestBody) {
               sendButtonMessage(
                 "Head or tails?", 
                 [
-                  { url: "http://advokit.myawesomebot.com/flip?a=heads", title: "heads" },
-                  { url: "http://advokit.myawesomebot.com/flip?a=tails", title: "tails" }
+                  { url: "http://advokit.myawesomebot.com/flip?a=head&s=" + senderId, title: "head" },
+                  { url: "http://advokit.myawesomebot.com/flip?a=tails&s=" + senderId, title: "tails" }
                 ],
                 senderId
               )
