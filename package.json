@@ -15,7 +15,7 @@
     {
       "name": "Martin Sonc",
       "email": "martin@superpixel.com"
-    },
+    }
   ],
   "license": "Apache Version 2.0",
   "dependencies": {
