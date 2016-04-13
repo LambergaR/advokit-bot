@@ -17,10 +17,14 @@ app.use(bodyParser.urlencoded({
 app.use(logging.requestLogger);
 // [END requests]
 
+function log(value) {
+	logging.info("ADVOKIT-BOT: " + value);
+}
+
 // [START hello_world]
 // Say hello!
 app.get('/', function (req, res) {
-  logging.info(req.body);
+  log(req.body);
   res.status(200).send('Hello, world!');
 });
 // [END hello_world]
@@ -36,51 +40,52 @@ app.get('/webhook', function (req, res) {
 
 app.post('/webhook', function (req, res) {
 
+	log(req.body);
+
   var entries = req.body["entry"];
   if(entries) {
     for(var i=0; i<entries.length; i++) {
     	var entry = entries[i];
     	var messages = entry["messaging"];
 
-  		logging.info("ENTRY: " + entry["id"]);
-    	logging.info(entry["time"]);
+  		log("entry: " + entry["id"] + " @ " + entry["time"]);
 
-    	for(var j=0; j<messages.length; j++) {
-  			var message = messages[j];
+  		if(messages) {
+	  		for(var j=0; j<messages.length; j++) {
+	  			var message = messages[j];
 
-				var senderId = message["sender"]["id"];
-				var messageText = message["message"]["text"];
+					var senderId = message["sender"]["id"];
+					var messageText = message["message"]["text"];
 
-				logging.info("  message from " + senderId + ": " + messageText);
+					log("  message from " + senderId + ": " + messageText);
 
-				request(
-					{
-    				url: 'https://graph.facebook.com/v2.6/me/messages?access_token=CAAN79d6at8MBAKM9O2rPO3qiqvE26mHUJlRCqO6bL2bKHTFIqzXbT7mbgD4R1NYCZBRGLlY0CffWo1T1dDgSprXJzZCZCgLpSeKpQr3m6TvSD87OwSqdwTNfgb3uwh6MxfYzEZB4CsI27M1FZAoKjZANZCZBZAEcclI5OsJmm3usGERgLUa8TqUVxO6XWduetZAX8ZD',
-    				method: 'POST',
-    				
-    				json: {
-        			recipient: {
-      					id: senderId
-        			},
-        			message: {
-        				text: messageText
-        			}
-    				}
-					}, function(error, response, body){
-    				if(error) {
-        			console.log(error);
-    				} else {
-        			console.log(response.statusCode, body);
+					request(
+						{
+	    				url: 'https://graph.facebook.com/v2.6/me/messages?access_token=CAAN79d6at8MBAKM9O2rPO3qiqvE26mHUJlRCqO6bL2bKHTFIqzXbT7mbgD4R1NYCZBRGLlY0CffWo1T1dDgSprXJzZCZCgLpSeKpQr3m6TvSD87OwSqdwTNfgb3uwh6MxfYzEZB4CsI27M1FZAoKjZANZCZBZAEcclI5OsJmm3usGERgLUa8TqUVxO6XWduetZAX8ZD',
+	    				method: 'POST',
+	    				
+	    				json: {
+	        			recipient: {
+	      					id: senderId
+	        			},
+	        			message: {
+	        				text: messageText
+	        			}
+	    				}
+						}, function(error, response, body){
+	    				if(error) {
+	        			console.log(error);
+	    				} else {
+	        			console.log(response.statusCode, body);
+							}
 						}
-					}
-				);
-
-    	}
+					);
+	    	}	
+  		}
+    	
     }
   }
   
-
-  logging.info(req.body);
   res.status(200).send();
 })
 // [END webhook_token]
