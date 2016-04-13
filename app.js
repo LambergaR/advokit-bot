@@ -40,7 +40,7 @@ app.get('/webhook', function (req, res) {
 
 app.post('/webhook', function (req, res) {
 
-	log(req.body);
+	log(JSON.stringify(req.body));
 
   var entries = req.body["entry"];
   if(entries) {
@@ -62,32 +62,32 @@ app.post('/webhook', function (req, res) {
 						var messageText = "TEST";
 						if(messageContainer && messageContainer["text"]) {
 							messageText = messageContainer["text"];
+
+							log("  message from " + senderId + ": " + messageText);
+
+							request(
+								{
+			    				url: 'https://graph.facebook.com/v2.6/me/messages?access_token=CAAN79d6at8MBAKM9O2rPO3qiqvE26mHUJlRCqO6bL2bKHTFIqzXbT7mbgD4R1NYCZBRGLlY0CffWo1T1dDgSprXJzZCZCgLpSeKpQr3m6TvSD87OwSqdwTNfgb3uwh6MxfYzEZB4CsI27M1FZAoKjZANZCZBZAEcclI5OsJmm3usGERgLUa8TqUVxO6XWduetZAX8ZD',
+			    				method: 'POST',
+			    				
+			    				json: {
+			        			recipient: {
+			      					id: senderId
+			        			},
+			        			message: {
+			        				text: messageText
+			        			}
+			    				}
+								}, function(error, response, body){
+			    				if(error) {
+			        			console.log(error);
+			    				} else {
+			        			console.log(response.statusCode, body);
+									}
+								}
+							);
 						}
 						
-
-						log("  message from " + senderId + ": " + messageText);
-
-						request(
-							{
-		    				url: 'https://graph.facebook.com/v2.6/me/messages?access_token=CAAN79d6at8MBAKM9O2rPO3qiqvE26mHUJlRCqO6bL2bKHTFIqzXbT7mbgD4R1NYCZBRGLlY0CffWo1T1dDgSprXJzZCZCgLpSeKpQr3m6TvSD87OwSqdwTNfgb3uwh6MxfYzEZB4CsI27M1FZAoKjZANZCZBZAEcclI5OsJmm3usGERgLUa8TqUVxO6XWduetZAX8ZD',
-		    				method: 'POST',
-		    				
-		    				json: {
-		        			recipient: {
-		      					id: senderId
-		        			},
-		        			message: {
-		        				text: messageText
-		        			}
-		    				}
-							}, function(error, response, body){
-		    				if(error) {
-		        			console.log(error);
-		    				} else {
-		        			console.log(response.statusCode, body);
-								}
-							}
-						);
 	  			} else {
 	  				log("  no message");
 	  			}
