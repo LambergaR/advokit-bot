@@ -11,6 +11,12 @@ app.get('/', function (req, res) {
 });
 // [END hello_world]
 
+// [START webhook_token]
+app.get('/webhook', function(req, res) {
+	res.status(200).send('here-be-dragons');
+});
+// [END webhook_token]
+
 if (module === require.main) {
   // [START server]
   // Start the server
