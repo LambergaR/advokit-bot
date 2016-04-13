@@ -2,8 +2,8 @@
 
 var express = require('express');
 var logging = require('./lib/logging')();
+var messaging = require('./messaging');
 var bodyParser = require('body-parser')
-var request = require('request');
 
 var app = express();
 
@@ -37,77 +37,57 @@ app.get('/webhook', function (req, res) {
     res.send('Error, wrong validation token');    
   }
 });
+// [END webhook_token]
 
+// [START webhook_post]
 app.post('/webhook', function (req, res) {
 
 	log(JSON.stringify(req.body));
 
-  var entries = req.body["entry"];
-  if(entries) {
-    for(var i=0; i<entries.length; i++) {
-    	var entry = entries[i];
-    	var messages = entry["messaging"];
-
-  		log("entry: " + entry["id"] + " @ " + entry["time"]);
-
-  		if(messages) {
-	  		for(var j=0; j<messages.length; j++) {
-	  			var message = messages[j];
-
-	  			if(message) {
-  					var senderId = message["sender"]["id"];
-  					var messageContainer = message["message"];
-
-
-						var messageText = "TEST";
-						if(messageContainer && messageContainer["text"]) {
-							messageText = messageContainer["text"];
-
-							log("  message from " + senderId + ": " + messageText);
-
-							request(
-								{
-			    				url: 'https://graph.facebook.com/v2.6/me/messages?access_token=CAAN79d6at8MBAKM9O2rPO3qiqvE26mHUJlRCqO6bL2bKHTFIqzXbT7mbgD4R1NYCZBRGLlY0CffWo1T1dDgSprXJzZCZCgLpSeKpQr3m6TvSD87OwSqdwTNfgb3uwh6MxfYzEZB4CsI27M1FZAoKjZANZCZBZAEcclI5OsJmm3usGERgLUa8TqUVxO6XWduetZAX8ZD',
-			    				method: 'POST',
-			    				
-			    				json: {
-			        			recipient: {
-			      					id: senderId
-			        			},
-			        			message: {
-			        				text: messageText
-			        			}
-			    				}
-								}, function(error, response, body){
-			    				if(error) {
-			        			console.log(error);
-			    				} else {
-			        			console.log(response.statusCode, body);
-									}
-								}
-							);
-						}
-						
-	  			} else {
-	  				log("  no message");
-	  			}
-	    	}	
-  		} else {
-  			log("no messages")
-  		}
-    	
-    }
+  if(messaging.processMessage(req.body)) {
+  	log("message processed");
   } else {
   	log("no entries");
   }
   
   res.status(200).send();
 })
-// [END webhook_token]
+// [END webhook_post]
 
-// Add the error logger after all middleware and routes so that
-// it can log errors from the whole application. Any custom error
-// handlers should go after this.
+// [START coin_flip]
+app.get('/flip', function (req, res) {
+	log(JSON.stringify(req.query));
+
+	if(req.query && req.query.a && req.query.s) {
+		var success = false;
+
+		if(Math.random() > 0.5) {
+			if(req.query.a == "heads") {
+				success = true;
+			}
+		} else {
+			if(req.query.a == "tails") {
+				success = true;
+			}
+		}
+
+		if(success) {
+			messaging.sendPlainTextMessage("lucky! :)", req.query.s);			
+		} else {
+			messaging.sendPlainTextMessage("sorry :(", req.query.s);
+		}
+
+		var response = {
+			success: success
+		};
+
+		res.status(200).send(response);
+	}
+
+  res.status(404).send();
+})
+// [END coin_flip]
+
 // [START errors]
 app.use(logging.errorLogger);
 
@@ -126,7 +106,7 @@ app.use(function (err, req, res, next) {
 // [END errors]
 
 
-
+// [START server]
 if (module === require.main) {
   // [START server]
   // Start the server
