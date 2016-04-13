@@ -22,10 +22,12 @@ ln -s /opt/nodejs/bin/npm /usr/bin/npm
 # git requires $HOME and it's not set during the startup script.
 export HOME=/root
 git config --global credential.helper gcloud.sh
-git clone https://source.developers.google.com/p/$PROJECTID /opt/app
+git clone https://github.com/LambergaR/advokit-bot /opt/app/myawesomebot
+
+ls -la /opt/app/myawesomebot
 
 # Install app dependencies
-cd src/myawesomebot/master/
+cd /opt/app/myawesomebot
 npm install
 
 # Create a nodeapp user. The application will run as this user.
@@ -35,7 +37,7 @@ chown -R nodeapp:nodeapp /opt/app
 # Configure supervisor to run the node app.
 cat >/etc/supervisor/conf.d/node-app.conf << EOF
 [program:nodeapp]
-directory=/opt/app/7-gce
+directory=/opt/app/myawesomebot
 command=npm start
 autostart=true
 autorestart=true
