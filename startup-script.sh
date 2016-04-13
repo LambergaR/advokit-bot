@@ -25,7 +25,7 @@ git config --global credential.helper gcloud.sh
 git clone https://source.developers.google.com/p/$PROJECTID /opt/app
 
 # Install app dependencies
-cd /opt/app/7-gce
+cd src/myawesomebot/master/
 npm install
 
 # Create a nodeapp user. The application will run as this user.
