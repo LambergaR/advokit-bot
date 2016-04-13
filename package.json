@@ -1,0 +1,32 @@
+{
+  "name": "advokit-bot",
+  "version": "0.0.1",
+  "description": "Simple Advokit FB bot demonstration",
+  "repository": "https://github.com/LambergaR/advokit-bot",
+  "private": false,
+  "scripts": {
+    "start": "node app.js",
+    "monitor": "nodemon app.js",
+    "deploy": "gcloud preview app deploy app.yaml",
+    "lint": "jshint --exclude-path=../.gitignore ."
+  },
+  "author": "Superpixel Inc",
+  "contributors": [
+    {
+      "name": "Martin Sonc",
+      "email": "martin@superpixel.com"
+    },
+  ],
+  "license": "Apache Version 2.0",
+  "dependencies": {
+    "express": "^4.13.4"
+  },
+  "devDependencies": {
+    "jshint": "^2.9.1",
+    "mocha": "^2.4.5",
+    "supertest": "^1.2.0"
+  },
+  "engines": {
+    "node": ">=0.12.7"
+  }
+}
