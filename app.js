@@ -12,8 +12,12 @@ app.get('/', function (req, res) {
 // [END hello_world]
 
 // [START webhook_token]
-app.get('/webhook', function(req, res) {
-	res.status(200).send('here-be-dragons');
+app.get('/webhook', function (req, res) {
+  if (req.query['hub.verify_token'] === "here-be-dragons") {
+    res.send(req.query['hub.challenge']);
+  } else {
+    res.send('Error, wrong validation token');    
+  }
 });
 // [END webhook_token]
 
