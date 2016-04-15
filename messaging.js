@@ -62,7 +62,7 @@ var generateMessageButtons = function(buttons) {
       } else {
         buttonsArray.push({
           type: "postback",
-          payload: payload,
+          payload: JSON.stringify(payload),
           title: text
         });  
       }
@@ -191,9 +191,13 @@ var processMessage = function(requestBody) {
       var messages = entry["messaging"];
 
       if(messages) {
+
         for(var messageIndex = 0; messageIndex < messages.length; messageIndex++) {
           var message = messages[messageIndex];
           
+          log("message: ");
+          log(JSON.stringify(message);
+
           var messageText = extractTextFromMessage(message);    
           var senderId = extractSenderIdFromMessage(message);
 
