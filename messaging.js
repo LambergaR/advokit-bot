@@ -1,5 +1,7 @@
 var logging = require('./lib/logging')();
 var request = require('request');
+var catalogue = require('./catalogue');
+var cart = require('./cart');
 
 function log(value) {
   logging.info("ADVOKIT-BOT: " + value);
@@ -45,26 +47,28 @@ var sendPlainTextMessage = function (text, senderId) {
 var generateMessageButtons = function(buttons) {
   var buttonsArray = [];
 
-  for(var i=0; i<buttons.length; i++) {
-    var button = buttons[i];
+  if(buttons) {
+    for(var i=0; i<buttons.length; i++) {
+      var button = buttons[i];
 
-    if(button) {
-      var payload = button["payload"];
-      var text = button["text"];
+      if(button) {
+        var payload = button["payload"];
+        var text = button["text"];
 
-      if((typeof payload === 'string' || payload instanceof String) && payload.startsWith("http")) {
-        // send the user to a website
-        buttonsArray.push({
-          type: "web_url",
-          url: payload,
-          title: text
-        });  
-      } else {
-        buttonsArray.push({
-          type: "postback",
-          payload: JSON.stringify(payload),
-          title: text
-        });  
+        if((typeof payload === 'string' || payload instanceof String) && payload.startsWith("http")) {
+          // send the user to a website
+          buttonsArray.push({
+            type: "web_url",
+            url: payload,
+            title: text
+          });  
+        } else {
+          buttonsArray.push({
+            type: "postback",
+            payload: JSON.stringify(payload),
+            title: text
+          });  
+        }
       }
     }
   }
@@ -93,6 +97,115 @@ var sendButtonMessage = function(text, buttons, senderId) {
   });
 }
 // [END send_button_message]
+
+// [START send_product_message]
+
+var generateProductElement = function(title, subtitle, imageUrl, buttons) {
+  return {
+    title: title,
+    subtitle: subtitle,
+    image_url: imageUrl,
+    buttons: generateMessageButtons(buttons)
+  };
+};
+
+var sendProductMessage = function(productIds, senderId) {
+  var productsEnc = [];
+  for(var i=0; i<productIds.length; i++) {
+//"buttons":[{"payload":"http://www.mothercare.ie/sale/car-seat-offers/chicco-new-go-baby-carrier-black.html","text":"View product"},{"payload":"{command: \"addToCart\", value: \"1\", senderId: 1102081296552638}","text":"Add to cart"}]}]}
+
+    var product = catalogue.productById(productIds[i]);
+    var buttons = [
+      {
+        payload: product.originUrl,
+        text: "View product"
+      },
+      {
+        payload: { command: "addToCart", value: product.productId, senderId: senderId },
+        text: "Add to cart"
+      }
+    ];
+
+    productsEnc.push(generateProductElement(product.title, product.subtitle, product.imageUrl, buttons));
+  }
+
+  sendJson({
+    recipient: {
+      id: senderId
+    },
+    message: {
+      attachment: {
+        type: "template",
+        payload: {
+          template_type: "generic",
+          elements: productsEnc
+        }
+      }
+    }
+  });
+};
+// [END send_product_message]
+
+// [START send_cart]
+var sendCart = function(senderId) {
+  var c = cart.getCart(senderId);
+  
+
+  if(c && c.products.length > 0) {
+
+    var productsEnc = [];
+
+    // summary card
+    var checkoutBtn = [{ payload: {command: "checkout", value: "", senderId: senderId} , text: "CHECKOUT" }];
+
+    productsEnc.push(generateProductElement("Here's your cart!", "Total: €" + c.total, "https://belfastbabyday.com/assets/uploads/mothercare-logo.png", checkoutBtn));
+
+    // products
+    for(var i=0; i<c.products.length; i++) {
+      var cartProduct = c.products[i];
+      var product = catalogue.productById(cartProduct.productId);
+
+      var buttons = [
+        {
+          payload: product.originUrl,
+          text: "View product"
+        },
+        {
+          payload: {command: "removeFromCart", value: product.productId, senderId: senderId},
+          text: "Remove"
+        }
+      ];
+
+      productsEnc.push(generateProductElement(product.title, product.subtitle, product.imageUrl, buttons));
+
+      log(JSON.stringify(productsEnc));
+    }
+
+    // send
+    if(productsEnc.length > 0) {
+      
+      sendJson({
+        recipient: {
+          id: senderId
+        },
+        message: {
+          attachment: {
+            type: "template",
+            payload: {
+              template_type: "generic",
+              elements: productsEnc
+            }
+          }
+        }
+      });
+    }
+
+  } else {
+    sendPlainTextMessage("Your cart is empty", senderId);
+  }
+
+}
+// [END send_cart]
 
 
 // extracts sender id from a message
@@ -210,6 +323,27 @@ var processPostbackPayload = function(payload, senderId) {
             sendPlainTextMessage("Sorry, more luck next time ...", senderId);
           }
           return true;
+        break;
+
+        case "addToCart":
+          var c = cart.addToCart(senderId, payloadJson.value);
+          log(JSON.stringify(c));
+
+          sendCart(senderId);
+
+
+          return true;
+        break;
+
+        case "removeFromCart":
+          var c = cart.removeFromCart(senderId, payloadJson.value);
+          log(JSON.stringify(c));
+
+          sendCart(senderId);
+
+          return true;
+        break;
+
       }
     }
   }
@@ -262,5 +396,6 @@ var processMessage = function(requestBody) {
 
 module.exports = {
   processMessage: processMessage,
-  sendPlainTextMessage: sendPlainTextMessage
+  sendPlainTextMessage: sendPlainTextMessage,
+  sendProductMessage: sendProductMessage
 }

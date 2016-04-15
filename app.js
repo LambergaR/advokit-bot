@@ -4,7 +4,7 @@ var express = require('express');
 var logging = require('./lib/logging')();
 var messaging = require('./messaging');
 var template = require('./template');
-var bodyParser = require('body-parser')
+var bodyParser = require('body-parser');
 
 var app = express();
 
@@ -90,6 +90,22 @@ app.get('/flip', function (req, res) {
   res.status(404).send();
 })
 // [END coin_flip]
+
+// [START send_product]
+app.post('/send/product', function(req, res) {
+	log(JSON.stringify(req.body));
+
+	if(req.body && req.body.productIds && req.body.sender) {
+		var productIds = req.body.productIds;
+		messaging.sendProductMessage(productIds, req.body.sender);
+
+		res.status(200).send();
+	}
+
+	res.status(404).send();
+	
+});
+// [END send_product]
 
 // [START errors]
 app.use(logging.errorLogger);
