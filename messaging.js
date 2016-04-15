@@ -42,20 +42,35 @@ var sendPlainTextMessage = function (text, senderId) {
 
 // send a button message
 // [START send_button_message]
-var generateUrlButtons = function(buttons) {
+var generateMessageButtons = function(buttons) {
   var buttonsArray = [];
 
   for(var i=0; i<buttons.length; i++) {
     var button = buttons[i];
 
     if(button) {
-      buttonsArray.push({
-        type: "web_url",
-        url: button["url"],
-        title: button["title"]
-      });
+      var payload = button["payload"];
+      var text = button["text"];
+
+      if((typeof payload === 'string' || payload instanceof String) && payload.startsWith("http")) {
+        // send the user to a website
+        buttonsArray.push({
+          type: "web_url",
+          url: payload,
+          title: text
+        });  
+      } else {
+        buttonsArray.push({
+          type: "postback",
+          payload: payload,
+          title: text
+        });  
+      }
     }
   }
+
+  log("Generated buttons:");
+  log(JSON.stringify(buttonsArray));
 
   return buttonsArray;
 }
@@ -71,7 +86,7 @@ var sendButtonMessage = function(text, buttons, senderId) {
         payload: {
           template_type: "button",
           text: text,
-          buttons: generateUrlButtons(buttons)
+          buttons: generateMessageButtons(buttons)
         }
       }
     }
@@ -130,8 +145,21 @@ var processTextMessage = function(messageText, senderId) {
       sendButtonMessage(
         "Head or tails?", 
         [
-          { url: "http://advokit.myawesomebot.com/flip?a=head&s=" + senderId, title: "head" },
-          { url: "http://advokit.myawesomebot.com/flip?a=tails&s=" + senderId, title: "tails" }
+          { payload: "http://advokit.myawesomebot.com/flip?a=head&s=" + senderId, text: "head" },
+          { payload: "http://advokit.myawesomebot.com/flip?a=tails&s=" + senderId, text: "tails" }
+        ],
+        senderId
+      )
+
+      return true;
+    }
+
+    if(messageText == "flip2") {
+      sendButtonMessage(
+        "Head or tails?", 
+        [
+          { payload: {command: "flip", value: "head", senderId: senderId} , text: "head" },
+          { payload: {command: "flip", value: "tails", senderId: senderId} , text: "tails" }
         ],
         senderId
       )
