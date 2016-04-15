@@ -93,7 +93,6 @@ var extractSenderIdFromMessage = function (message) {
 };
 // [END extract_sender_id_from_message]
 
-
 // extracts text from a message
 // [START extract_sender_id_from_message]
 var extractTextFromMessage = function(message) {
@@ -108,9 +107,54 @@ var extractTextFromMessage = function(message) {
 };
 // [END extract_sender_id_from_message]
 
+// extracts optin ref from a message
+// [START extract_optin_ref_from_message]
+var extractOptInRef = function (message) {
+  var optin = message["optin"];
+
+  if(optin) {
+    return optin["ref"];
+  }
+
+  return null;
+};
+// [END extract_optin_ref_from_message]
+
 
 // process a message
 // [START process_message] 
+var processTextMessage = function(messageText, senderId) {
+  if(messageText && senderId) {
+
+    if(messageText == "flip") {
+      sendButtonMessage(
+        "Head or tails?", 
+        [
+          { url: "http://advokit.myawesomebot.com/flip?a=head&s=" + senderId, title: "head" },
+          { url: "http://advokit.myawesomebot.com/flip?a=tails&s=" + senderId, title: "tails" }
+        ],
+        senderId
+      )
+    } else {
+      sendPlainTextMessage(messageText, senderId);  
+    }
+
+    return true;
+  }
+
+  return false;
+};
+
+var processOptinMessage = function(optinRef, senderId) {
+  if(optinRef && senderId) {
+    sendPlainTextMessage("Welcome!", senderId);
+    
+    return true;
+  }
+
+  return false;
+};
+
 var processMessage = function(requestBody) {
   var entries = requestBody["entry"];
 
@@ -127,23 +171,16 @@ var processMessage = function(requestBody) {
           var messageText = extractTextFromMessage(message);    
           var senderId = extractSenderIdFromMessage(message);
 
-          if(messageText && senderId) {
-
-            if(messageText == "flip") {
-              sendButtonMessage(
-                "Head or tails?", 
-                [
-                  { url: "http://advokit.myawesomebot.com/flip?a=head&s=" + senderId, title: "head" },
-                  { url: "http://advokit.myawesomebot.com/flip?a=tails&s=" + senderId, title: "tails" }
-                ],
-                senderId
-              )
-            } else {
-              sendPlainTextMessage(messageText, senderId);  
-            }
-            
-            return true;
+          if(messageText) {
+            return processTextMessage(messageText, senderId);
           }
+
+          var optinRef = extractOptInRef;
+
+          if(optinRef) {
+            return processOptinMessage(optinRef, senderId);
+          }
+          
         }
       }
     }

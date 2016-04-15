@@ -3,9 +3,13 @@
 var express = require('express');
 var logging = require('./lib/logging')();
 var messaging = require('./messaging');
+var template = require('./template');
 var bodyParser = require('body-parser')
 
 var app = express();
+
+var appId = '980720862017475';   // https://developers.facebook.com/apps/980720862017475
+var pageId = '1731809413699393'; // https://www.facebook.com/superpixeltest/
 
 
 // [START requests]
@@ -21,13 +25,12 @@ function log(value) {
 	logging.info("ADVOKIT-BOT: " + value);
 }
 
-// [START hello_world]
+// [START login]
 // Say hello!
 app.get('/', function (req, res) {
-  log(req.body);
-  res.status(200).send('Hello, world!');
+  res.status(200).send(template.renderLogin(pageId, appId));
 });
-// [END hello_world]
+// [END login]
 
 // [START webhook_token]
 app.get('/webhook', function (req, res) {
