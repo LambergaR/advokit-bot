@@ -135,6 +135,19 @@ var extractOptInRef = function (message) {
 };
 // [END extract_optin_ref_from_message]
 
+// extracts optin ref from a message
+// [START extract_optin_ref_from_message]
+var extractPostbackPayload = function (message) {
+  var postback = message["postback"];
+
+  if(postback) {
+    return postback["payload"];
+  }
+
+  return null;
+};
+// [END extract_optin_ref_from_message]
+
 
 // process a message
 // [START process_message] 
@@ -181,6 +194,28 @@ var processOptinMessage = function(optinRef, senderId) {
   return false;
 };
 
+var processPostbackPayload = function(payload, senderId) {
+  if(payload && senderId) {
+    payloadJson = JSON.parse(payload);
+
+    if(payloadJson.command) {
+      log(JSON.stringify(payloadJson));
+
+      switch(payloadJson.command) {
+
+        case "flip":
+          if(Math.random() > 0.5) {
+            sendPlainTextMessage("Congrats, " + payloadJson.value + " it is!", senderId);
+          } else {
+            sendPlainTextMessage("Sorry, more luck next time ...", senderId);
+          }
+          return true;
+      }
+    }
+  }
+  return false;
+};
+
 var processMessage = function(requestBody) {
   var entries = requestBody["entry"];
 
@@ -196,7 +231,7 @@ var processMessage = function(requestBody) {
           var message = messages[messageIndex];
           
           log("message: ");
-          log(JSON.stringify(message);
+          log(JSON.stringify(message));
 
           var messageText = extractTextFromMessage(message);    
           var senderId = extractSenderIdFromMessage(message);
@@ -209,6 +244,11 @@ var processMessage = function(requestBody) {
 
           if(optinRef) {
             return processOptinMessage(optinRef, senderId);
+          }
+
+          var postbackPayload = extractPostbackPayload(message);
+          if(processPostbackPayload) {
+            return processPostbackPayload(postbackPayload, senderId);
           }
           
         }
