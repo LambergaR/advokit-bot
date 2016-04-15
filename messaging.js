@@ -173,7 +173,7 @@ var processMessage = function(requestBody) {
             return processTextMessage(messageText, senderId);
           }
 
-          var optinRef = extractOptInRef;
+          var optinRef = extractOptInRef(message);
 
           if(optinRef) {
             return processOptinMessage(optinRef, senderId);
