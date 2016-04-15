@@ -135,11 +135,9 @@ var processTextMessage = function(messageText, senderId) {
         ],
         senderId
       )
-    } else {
-      sendPlainTextMessage(messageText, senderId);  
-    }
 
-    return true;
+      return true;
+    }
   }
 
   return false;
@@ -148,7 +146,7 @@ var processTextMessage = function(messageText, senderId) {
 var processOptinMessage = function(optinRef, senderId) {
   if(optinRef && senderId) {
     sendPlainTextMessage("Welcome!", senderId);
-    
+
     return true;
   }
 
