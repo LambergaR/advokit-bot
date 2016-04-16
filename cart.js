@@ -1,97 +1,163 @@
 var logging = require('./lib/logging')();
 var catalogue = require('./catalogue');
+var cartService = require('./cart-service');
 
-var cartContainer = [];
+// var cartContainer = [];
+
+/*
+	cart:
+	{
+		userId: <user_id>,
+		total: <total value of the elements in the cart>,
+
+		products: [
+			{
+				productId: <product_id>,
+				count: <count>
+			}
+		]
+	}
+
+	product:
+	{
+		title: <name of the product>, 
+    subtitle: <description of the product>,
+    imageUrl: <image url>,
+    originUrl: <original website url>,
+    productId: <id>,
+    price: <decimal>
+
+    }
+*/
 
 function log(value) {
   logging.info("ADVOKIT-BOT: " + value);
 }
 
-var addToCart = function(userId, productId) {
+var addToCart = function(userId, productId, callback) {
 	log("addToCart");
 
-	var cart = getCart(userId);
-	var product = catalogue.productById(productId);
-
-	if(cart && product) {
-		cart.total = cart.total + product.price;
-
-		for(var i=0; i<cart.products.length; i++) {
-			if(cart.products[i].productId == productId) {
-				
-				log("-> existing product, increasing count");
-
-				cart.products[i].count = cart.products[i].count + 1;
-
-				log(JSON.stringify(cart))
-
-				return cart;
+	getCart(userId, function(err, cart) {
+		if(err) {
+			
+			if(callback) {
+				callback(err, null);
+			}  else {
+				log(err);
 			}
+
+			return;
 		}
 
-		log("-> new product");
+		var product = catalogue.productById(productId);
 
-		cart.products.push({productId: productId, count: 1});
+		if(cart && product) {
+			cart.total = cart.total + product.price;
 
-		log(JSON.stringify(cart))
-	}
+			for(var i=0; i<cart.products.length; i++) {
+				if(cart.products[i].productId == productId) {
+					
+					log("-> existing product, increasing count");
 
-	return cart;
+					cart.products[i].count = cart.products[i].count + 1;
+
+					log(JSON.stringify(cart))
+					cartService.upsertCart(cart, callback);
+					
+					return;
+				}
+			}
+
+			log("-> new product");
+
+			cart.products.push({productId: productId, count: 1});
+
+			cartService.upsertCart(cart, callback);
+			log(JSON.stringify(cart))
+		}
+
+	});
+	
 }
 
-var removeFromCart = function(userId, productId) {
+var removeFromCart = function(userId, productId, callback) {
 	log("removeFromCart");
 
-	var cart = getCart(userId);
-	var product = catalogue.productById(productId);
+	getCart(userId, function(err, cart) {
+		if(err) {
+			callback(err);
+			return;
+		}
 
-	if(cart && product) {
-		var cartProduct = null;
-		var index = -1;
-		for(var i=0; i<cart.products.length; i++) {
-			if(cart.products[i].productId == productId) {
+		var product = catalogue.productById(productId);
 
-				log("-> found product with id " + productId + " in the cart")
+		if(cart && product) {
+			var cartProduct = null;
+			var index = -1;
+			for(var i=0; i<cart.products.length; i++) {
+				if(cart.products[i].productId == productId) {
 
-				cartProduct = cart.products[i];
-				index = i;
+					log("-> found product with id " + productId + " in the cart")
 
-				break;
+					cartProduct = cart.products[i];
+					index = i;
+
+					break;
+				}
 			}
-		}
 
-		if(cartProduct && index <= 0) {
-			log("-> removing from cart");
+			if(cartProduct && index <= 0) {
+				log("-> removing from cart");
 
-			cart.products.splice(index, 1);	
-			cart.total = cart.total - product.price;
-		}
+				cart.products.splice(index, 1);	
+				cart.total = cart.total - product.price;
+			}
 
-		log(JSON.stringify(cart))
-	}
-
-	return cart;
+			cartService.upsertCart(cart, function(err) {
+				if(err) {
+					log(err);
+					callback(err);
+				} else {
+					log(JSON.stringify(cart));
+					callback(null);
+				}
+			});
+		}	
+	});
 }
 
-var getCart = function(userId) {
+var getCart = function(userId, callback) {
 	log("getCart");
+ 	cartService.getCart(userId, function(err, cart) {
+ 		if(err) {
+ 			log("Error fetching cart");
+			log(err);
 
-  for(var i=0; i<cartContainer.length; i++) {
-  	var cart = cartContainer[i];
+			if(callback) {
+				callback(err, null);	
+			}
 
-  	if(cart.userId==userId) {
-  		log("-> found existing cart for user " + userId);
-  		log(JSON.stringify(cart))
+ 		} else {
+ 			log("Retrieved cart: ");
+			log(JSON.stringify(cart));
 
-  		return cart;
-  	}
-  }
+			var extractedCart = {userId: userId, products: [], total: 0};
 
-	log("-> creating new cart for user " + userId);
-  var cart = {userId: userId, products: [], total: 0};
-  cartContainer.push(cart);
+			if(!cart) {
+				log("Creating a new cart");
 
-  return cart;
+				cartService.upsertCart(extractedCart, function(err) {});
+			} else {
+				if(cart.data) {
+					extractedCart = cart.data;
+				}
+			}
+
+			if(callback) {
+				callback(null, extractedCart);	
+			}
+ 		}
+ 	});
 }
 
 module.exports = {

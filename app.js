@@ -6,6 +6,8 @@ var messaging = require('./messaging');
 var template = require('./template');
 var bodyParser = require('body-parser');
 
+var util = require('util');
+
 var app = express();
 
 var appId = '980720862017475';   // https://developers.facebook.com/apps/980720862017475
@@ -22,7 +24,7 @@ app.use(logging.requestLogger);
 // [END requests]
 
 function log(value) {
-	logging.info("ADVOKIT-BOT: " + value);
+  logging.info("ADVOKIT-BOT: " + value);
 }
 
 // [START login]
@@ -45,12 +47,12 @@ app.get('/webhook', function (req, res) {
 // [START webhook_post]
 app.post('/webhook', function (req, res) {
 
-	log(JSON.stringify(req.body));
+  log(JSON.stringify(req.body));
 
   if(messaging.processMessage(req.body)) {
-  	log("message processed");
+    log("message processed");
   } else {
-  	log("no entries");
+    log("no entries");
   }
   
   res.status(200).send();
@@ -59,33 +61,33 @@ app.post('/webhook', function (req, res) {
 
 // [START coin_flip]
 app.get('/flip', function (req, res) {
-	log(JSON.stringify(req.query));
+  log(JSON.stringify(req.query));
 
-	if(req.query && req.query.a && req.query.s) {
-		var success = false;
+  if(req.query && req.query.a && req.query.s) {
+    var success = false;
 
-		if(Math.random() > 0.5) {
-			if(req.query.a == "head") {
-				success = true;
-			}
-		} else {
-			if(req.query.a == "tails") {
-				success = true;
-			}
-		}
+    if(Math.random() > 0.5) {
+      if(req.query.a == "head") {
+        success = true;
+      }
+    } else {
+      if(req.query.a == "tails") {
+        success = true;
+      }
+    }
 
-		if(success) {
-			messaging.sendPlainTextMessage("lucky! :)", req.query.s);			
-		} else {
-			messaging.sendPlainTextMessage("sorry :(", req.query.s);
-		}
+    if(success) {
+      messaging.sendPlainTextMessage("lucky! :)", req.query.s);     
+    } else {
+      messaging.sendPlainTextMessage("sorry :(", req.query.s);
+    }
 
-		var response = {
-			success: success
-		};
+    var response = {
+      success: success
+    };
 
-		res.status(200).send(response);
-	}
+    res.status(200).send(response);
+  }
 
   res.status(404).send();
 })
@@ -93,17 +95,17 @@ app.get('/flip', function (req, res) {
 
 // [START send_product]
 app.post('/send/product', function(req, res) {
-	log(JSON.stringify(req.body));
+  log(JSON.stringify(req.body));
 
-	if(req.body && req.body.productIds && req.body.sender) {
-		var productIds = req.body.productIds;
-		messaging.sendProductMessage(productIds, req.body.sender);
+  if(req.body && req.body.productIds && req.body.sender) {
+    var productIds = req.body.productIds;
+    messaging.sendProductMessage(productIds, req.body.sender);
 
-		res.status(200).send();
-	}
+    res.status(200).send();
+  }
 
-	res.status(404).send();
-	
+  res.status(404).send();
+  
 });
 // [END send_product]
 
@@ -133,7 +135,7 @@ if (module === require.main) {
     var host = server.address().address;
     var port = server.address().port;
 
-    log('App listening at http://%s:%s', host, port);
+    log(util.format('App listening at http://%s:%s', host, port));
   });
   // [END server]
 }

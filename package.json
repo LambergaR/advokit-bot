@@ -25,7 +25,9 @@
     "request": "^2.71.0",
     "swig": "^1.4.2",
     "winston": "^2.2.0",
-    "swig": "^1.4.2"
+    "gcloud": "^0.30.3",
+    "async": "^1.5.2"
+
   },
   "devDependencies": {
     "jshint": "^2.9.1",

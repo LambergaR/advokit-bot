@@ -112,7 +112,6 @@ var generateProductElement = function(title, subtitle, imageUrl, buttons) {
 var sendProductMessage = function(productIds, senderId) {
   var productsEnc = [];
   for(var i=0; i<productIds.length; i++) {
-//"buttons":[{"payload":"http://www.mothercare.ie/sale/car-seat-offers/chicco-new-go-baby-carrier-black.html","text":"View product"},{"payload":"{command: \"addToCart\", value: \"1\", senderId: 1102081296552638}","text":"Add to cart"}]}]}
 
     var product = catalogue.productById(productIds[i]);
     var buttons = [
@@ -148,62 +147,63 @@ var sendProductMessage = function(productIds, senderId) {
 
 // [START send_cart]
 var sendCart = function(senderId) {
-  var c = cart.getCart(senderId);
-  
+  log("SEND CART");
+  cart.getCart(senderId, function(err, c) {
+    if(err) {
+      log("Unable to send")
+      log(error);
+    } else if(c && c.products.length > 0) {
+      log("Sending a cart");
+      var productsEnc = [];
 
-  if(c && c.products.length > 0) {
+      // summary card
+      var checkoutBtn = [{ payload: {command: "checkout", value: "", senderId: senderId} , text: "CHECKOUT" }];
 
-    var productsEnc = [];
+      productsEnc.push(generateProductElement("Here's your cart!", "Total: €" + c.total, "https://belfastbabyday.com/assets/uploads/mothercare-logo.png", checkoutBtn));
 
-    // summary card
-    var checkoutBtn = [{ payload: {command: "checkout", value: "", senderId: senderId} , text: "CHECKOUT" }];
+      // products
+      for(var i=0; i<c.products.length; i++) {
+        var cartProduct = c.products[i];
+        var product = catalogue.productById(cartProduct.productId);
 
-    productsEnc.push(generateProductElement("Here's your cart!", "Total: €" + c.total, "https://belfastbabyday.com/assets/uploads/mothercare-logo.png", checkoutBtn));
+        var buttons = [
+          {
+            payload: product.originUrl,
+            text: "View product"
+          },
+          {
+            payload: {command: "removeFromCart", value: product.productId, senderId: senderId},
+            text: "Remove"
+          }
+        ];
 
-    // products
-    for(var i=0; i<c.products.length; i++) {
-      var cartProduct = c.products[i];
-      var product = catalogue.productById(cartProduct.productId);
+        productsEnc.push(generateProductElement(product.title, product.subtitle, product.imageUrl, buttons));
 
-      var buttons = [
-        {
-          payload: product.originUrl,
-          text: "View product"
-        },
-        {
-          payload: {command: "removeFromCart", value: product.productId, senderId: senderId},
-          text: "Remove"
-        }
-      ];
+        log(JSON.stringify(productsEnc));
+      }
 
-      productsEnc.push(generateProductElement(product.title, product.subtitle, product.imageUrl, buttons));
-
-      log(JSON.stringify(productsEnc));
-    }
-
-    // send
-    if(productsEnc.length > 0) {
-      
-      sendJson({
-        recipient: {
-          id: senderId
-        },
-        message: {
-          attachment: {
-            type: "template",
-            payload: {
-              template_type: "generic",
-              elements: productsEnc
+      // send
+      if(productsEnc.length > 0) {
+        sendJson({
+          recipient: {
+            id: senderId
+          },
+          message: {
+            attachment: {
+              type: "template",
+              payload: {
+                template_type: "generic",
+                elements: productsEnc
+              }
             }
           }
-        }
-      });
+        });
+      }
+
+    } else {
+      sendPlainTextMessage("Your cart is empty", senderId);
     }
-
-  } else {
-    sendPlainTextMessage("Your cart is empty", senderId);
-  }
-
+  });
 }
 // [END send_cart]
 
@@ -326,20 +326,28 @@ var processPostbackPayload = function(payload, senderId) {
         break;
 
         case "addToCart":
-          var c = cart.addToCart(senderId, payloadJson.value);
-          log(JSON.stringify(c));
-
-          sendCart(senderId);
-
+          cart.addToCart(senderId, payloadJson.value, function(err) {
+            if(err) {
+              log("Unable to add product to cart!");
+              log(err);
+            } else {
+              sendCart(senderId);
+            }
+          });
+          
 
           return true;
         break;
 
         case "removeFromCart":
-          var c = cart.removeFromCart(senderId, payloadJson.value);
-          log(JSON.stringify(c));
-
-          sendCart(senderId);
+          cart.removeFromCart(senderId, payloadJson.value, function(err) {
+            if(err) {
+              log("Unable to remove product from cart");
+              log(err);
+            } else {
+              sendCart(senderId);
+            }
+          });
 
           return true;
         break;
