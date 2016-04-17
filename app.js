@@ -4,15 +4,12 @@ var express = require('express');
 var logging = require('./lib/logging')();
 var messaging = require('./messaging');
 var template = require('./template');
+var config = require('./config')
 var bodyParser = require('body-parser');
 
 var util = require('util');
 
 var app = express();
-
-var appId = '980720862017475';   // https://developers.facebook.com/apps/980720862017475
-var pageId = '1731809413699393'; // https://www.facebook.com/superpixeltest/
-
 
 // [START requests]
 app.use(bodyParser.json());
@@ -27,10 +24,13 @@ function log(value) {
   logging.info("ADVOKIT-BOT: " + value);
 }
 
+var test = config.v.fbAppId;
+log(test);
+
 // [START login]
 // Say hello!
 app.get('/', function (req, res) {
-  res.status(200).send(template.renderLogin(pageId, appId));
+  res.status(200).send(template.renderLogin(config.v.fbPageId, config.v.fbAppId));
 });
 // [END login]
 

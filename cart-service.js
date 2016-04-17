@@ -1,19 +1,14 @@
 'use strict';
 
-var input = process.argv.splice(2);
-var command = input.shift();
+var config = require('./config')
 
-var projectId = process.env.DATASTORE_PROJECT_ID || process.env.GCLOUD_PROJECT;
-if (!projectId) {
-  throw new Error('GCLOUD_PROJECT environment variable required.');
-}
 var keyFile = process.env.DATASTORE_KEYFILE ||
               process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
 // [START build_service]
 var gcloud = require('gcloud');
 var options = {
-  projectId: projectId
+  projectId: config.v.project
 };
 
 if (keyFile) {
